@@ -1,12 +1,13 @@
 package modelo;
 
 import java.io.Serializable;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase que genera el ArrayList ListadoPalabras donde se almacenan todas las cadenas y sus
- * métodos para gestionarlo
+ * Clase que genera el ArrayList ListadoPalabras donde se almacenan todas las
+ * cadenas y sus métodos para gestionarlo
  * 
  * @author jalfonso
  *
@@ -27,19 +28,25 @@ public class ListadoPalabras implements Serializable {
 	}
 
 	/**
-	 * Método que cuenta el número de veces que existe la palabra que se le pasa
+	 * Método que cuenta el número de veces que existe la cadena que se le pasa
 	 * como argumento dentro de ListadoPalabras
 	 * 
-	 * @param s Palabra a buscar dentro de ListadoPalabras
-	 * @return Número de veces que la palabra pasada como argumento se encuentra
+	 * @param s Cadena a buscar dentro de ListadoPalabras
+	 * @return Número de veces que la cadena pasada como argumento se encuentra
 	 *         contenida en ListadoPalabras
 	 */
 	public int searchString(String s) {
 		int numCoincidencias = 0;
 		for (String p : lp) {
+
+			// Eliminamos los posibles acentos de las cadenas
+			s = Normalizer.normalize(s, Normalizer.Form.NFD);
+			s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+			
 			if (p.toLowerCase().contains(s.toLowerCase())) {
 				numCoincidencias++;
 			}
+
 		}
 		return numCoincidencias;
 	}

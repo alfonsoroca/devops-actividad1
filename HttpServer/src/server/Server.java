@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.text.Normalizer;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,7 +17,7 @@ import com.sun.net.httpserver.HttpServer;
 import modelo.ListadoPalabras;
 
 /**
- * Clase que genera el servidor que almacena el ListadoPalabras y controla los
+ * Clase que genera el servidor que almacena el ListadoPalabras y gestiona los
  * endpoints
  * 
  * @author jalfonso
@@ -25,6 +26,7 @@ import modelo.ListadoPalabras;
 public class Server {
 	public static void main(String[] args) throws IOException {
 
+		// Persistencia y carga de datos
 		ListadoPalabras lp = new ListadoPalabras();
 		File fichero = new File("listado_palabras.dat");
 
@@ -45,12 +47,13 @@ public class Server {
 		int port = 12345;
 		HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 		System.out.println("Server started at " + port);
+		
 		server.createContext("/almacena", new PostHandler(lp, fichero));
 		server.createContext("/consulta", new GetHandler(lp));
 		server.createContext("/vaciar", new DeleteHandler(lp, fichero));
 		server.createContext("/listado", new ListHandler(lp));
 		server.setExecutor(null);
-		server.start();		
+		server.start();
 	}
 
 	private static class PostHandler implements HttpHandler {
@@ -66,26 +69,41 @@ public class Server {
 		@Override
 		public void handle(HttpExchange t) throws IOException {
 
-			String result = t.getRequestURI().getQuery();
+			String requestMethod = t.getRequestMethod();
 
-			lp.addString(result);
+			if (requestMethod.equalsIgnoreCase("POST")) {
 
-			try (FileOutputStream fos = new FileOutputStream(fichero);
-					ObjectOutputStream oos = new ObjectOutputStream(fos);) {
+				// Eliminamos los posibles acentos de las cadenas antes de añadirlos al fichero
+				String result = Normalizer.normalize(t.getRequestURI().getQuery(), Normalizer.Form.NFD);
+				result = result.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
 
-				oos.writeObject(lp);
-				System.out.println("Palabra añadida y fichero guardado");
+				lp.addString(result);
 
-			} catch (Exception e) {
-				e.printStackTrace();
+				try (FileOutputStream fos = new FileOutputStream(fichero);
+						ObjectOutputStream oos = new ObjectOutputStream(fos);) {
+
+					oos.writeObject(lp);
+					System.out.println("Cadena añadida y fichero guardado");
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				String response = "Cadena agregada al fichero";
+				t.sendResponseHeaders(200, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+
+			} else {
+
+				String response = "501 Not implemented";
+				t.sendResponseHeaders(501, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+
 			}
-
-			//String response = "Server-> Añadido al fichero " + result;
-			String response = "Server-> " + result;
-			t.sendResponseHeaders(200, response.length());
-			OutputStream os = t.getResponseBody();
-			os.write(response.getBytes());
-			os.close();
 		}
 	}
 
@@ -100,13 +118,27 @@ public class Server {
 		@Override
 		public void handle(HttpExchange t) throws IOException {
 
-			String result = t.getRequestURI().getQuery();
-			String response = "Server-> Veces que la cadena " + "*" + result + "*" + " se encuentra en el fichero: " + String.valueOf(lp.searchString(result));
-			
-			t.sendResponseHeaders(200, response.length());
-			OutputStream os = t.getResponseBody();
-			os.write(response.getBytes());
-			os.close();
+			String requestMethod = t.getRequestMethod();
+
+			if (requestMethod.equalsIgnoreCase("GET")) {
+
+				String result = t.getRequestURI().getQuery();
+				String response = "Veces que la cadena se encuentra en el fichero: "
+						+ String.valueOf(lp.searchString(result));
+
+				t.sendResponseHeaders(200, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+
+			} else {
+
+				String response = "501 Not implemented";
+				t.sendResponseHeaders(501, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+			}
 		}
 	}
 
@@ -123,26 +155,39 @@ public class Server {
 		@Override
 		public void handle(HttpExchange t) throws IOException {
 
-			lp.clear();;
+			String requestMethod = t.getRequestMethod();
 
-			try (FileOutputStream fos = new FileOutputStream(fichero);
-					ObjectOutputStream oos = new ObjectOutputStream(fos);) {
+			if (requestMethod.equalsIgnoreCase("DELETE")) {
 
-				oos.writeObject(lp);
-				System.out.println("Fichero vacidado y guardado");
+				lp.clear();
 
-			} catch (Exception e) {
-				e.printStackTrace();
+				try (FileOutputStream fos = new FileOutputStream(fichero);
+						ObjectOutputStream oos = new ObjectOutputStream(fos);) {
+
+					oos.writeObject(lp);
+					System.out.println("Fichero vacidado y guardado");
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				String response = "Contenido del fichero eliminado";
+				t.sendResponseHeaders(200, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+
+			} else {
+
+				String response = "501 Not implemented";
+				t.sendResponseHeaders(501, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
 			}
-
-			String response = "Server-> Contenido del fichero eliminado";
-			t.sendResponseHeaders(200, response.length());
-			OutputStream os = t.getResponseBody();
-			os.write(response.getBytes());
-			os.close();
 		}
 	}
-	
+
 	private static class ListHandler implements HttpHandler {
 
 		ListadoPalabras lp;
@@ -153,12 +198,25 @@ public class Server {
 
 		@Override
 		public void handle(HttpExchange t) throws IOException {
-			
-			String response = "Server-> Contenido del fichero: " + lp.list();
-			t.sendResponseHeaders(200, response.length());
-			OutputStream os = t.getResponseBody();
-			os.write(response.getBytes());
-			os.close();
+
+			String requestMethod = t.getRequestMethod();
+
+			if (requestMethod.equalsIgnoreCase("GET")) {
+
+				String response = "Contenido del fichero: " + lp.list();
+				t.sendResponseHeaders(200, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+
+			} else {
+
+				String response = "501 Not implemented";
+				t.sendResponseHeaders(501, response.length());
+				OutputStream os = t.getResponseBody();
+				os.write(response.getBytes());
+				os.close();
+			}
 		}
 	}
 }
