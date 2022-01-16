@@ -47,7 +47,7 @@ public class Server {
 		int port = 12345;
 		HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 		System.out.println("Server started at " + port);
-		
+
 		server.createContext("/almacena", new PostHandler(lp, fichero));
 		server.createContext("/consulta", new GetHandler(lp));
 		server.createContext("/vaciar", new DeleteHandler(lp, fichero));
@@ -97,12 +97,11 @@ public class Server {
 
 			} else {
 
-				String response = "501 Not implemented";
+				String response = "<h1>501 Not Implemented</h1>Method not implemented";
 				t.sendResponseHeaders(501, response.length());
 				OutputStream os = t.getResponseBody();
 				os.write(response.getBytes());
 				os.close();
-
 			}
 		}
 	}
@@ -122,7 +121,10 @@ public class Server {
 
 			if (requestMethod.equalsIgnoreCase("GET")) {
 
-				String result = t.getRequestURI().getQuery();
+				// Eliminamos los posibles acentos de las cadenas
+				String result = Normalizer.normalize(t.getRequestURI().getQuery(), Normalizer.Form.NFD);
+				result = result.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+				
 				String response = "Veces que la cadena se encuentra en el fichero: "
 						+ String.valueOf(lp.searchString(result));
 
@@ -133,7 +135,7 @@ public class Server {
 
 			} else {
 
-				String response = "501 Not implemented";
+				String response = "<h1>501 Not Implemented</h1>Method not implemented";
 				t.sendResponseHeaders(501, response.length());
 				OutputStream os = t.getResponseBody();
 				os.write(response.getBytes());
@@ -179,7 +181,7 @@ public class Server {
 
 			} else {
 
-				String response = "501 Not implemented";
+				String response = "<h1>501 Not Implemented</h1>Method not implemented";
 				t.sendResponseHeaders(501, response.length());
 				OutputStream os = t.getResponseBody();
 				os.write(response.getBytes());
@@ -211,7 +213,7 @@ public class Server {
 
 			} else {
 
-				String response = "501 Not implemented";
+				String response = "<h1>501 Not Implemented</h1>Method not implemented";
 				t.sendResponseHeaders(501, response.length());
 				OutputStream os = t.getResponseBody();
 				os.write(response.getBytes());

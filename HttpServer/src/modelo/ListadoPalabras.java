@@ -1,7 +1,6 @@
 package modelo;
 
 import java.io.Serializable;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,16 +36,10 @@ public class ListadoPalabras implements Serializable {
 	 */
 	public int searchString(String s) {
 		int numCoincidencias = 0;
-		for (String p : lp) {
-
-			// Eliminamos los posibles acentos de las cadenas
-			s = Normalizer.normalize(s, Normalizer.Form.NFD);
-			s = s.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
-			
+		for (String p : lp) {			
 			if (p.toLowerCase().contains(s.toLowerCase())) {
 				numCoincidencias++;
 			}
-
 		}
 		return numCoincidencias;
 	}
