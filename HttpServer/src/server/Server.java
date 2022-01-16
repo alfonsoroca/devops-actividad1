@@ -20,7 +20,7 @@ import modelo.ListadoPalabras;
  * Clase que genera el servidor que almacena el ListadoPalabras y gestiona los
  * endpoints
  * 
- * @author jalfonso
+ * @author Francisco Miguel Gonzalez Herrera, Rafael Moreno Estevez y José Alfonso Rodríguez Cabrero
  *
  */
 public class Server {

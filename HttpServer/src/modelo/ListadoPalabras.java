@@ -8,7 +8,7 @@ import java.util.List;
  * Clase que genera el ArrayList ListadoPalabras donde se almacenan todas las
  * cadenas y sus métodos para gestionarlo
  * 
- * @author jalfonso
+ * @author Francisco Miguel Gonzalez Herrera, Rafael Moreno Estevez y José Alfonso Rodríguez Cabrero
  *
  */
 public class ListadoPalabras implements Serializable {
